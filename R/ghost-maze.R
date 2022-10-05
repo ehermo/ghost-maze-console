@@ -10,26 +10,47 @@
 require(collections)
 require(knitr)
 require(beepr)
+require(dplyr)
+require(cli)
 
+action_map <- dict()
+action_map$set("walk" ,list("desc"="walk forward  👆", "keys"=c("w","W")))
+action_map$set("turnr",list("desc"="turn right    👉", "keys"=c("d","D")))
+action_map$set("turnl",list("desc"="turn left     👈", "keys"=c("a","A")))
+action_map$set("quit" ,list("desc"="quit the game 👋", "keys"=c("q","Q")))
 
-mapping <- dict()
-mapping$set(0, "🏾 " )#⛰  ◾■🔳
-mapping$set(1, "🏻 ")# □ ◻ ◽
-mapping$set(2, "👻 ")#🎃🧟🕷
-mapping$set(9, "⛩ ") 
-mapping$set(5, "🚹 ")
+sound_map <- dict()
+sound_map$set("move",list("beep"=10, "duration" = 1))
+sound_map$set("quit",list("beep"=6, "duration" = 1))
+sound_map$set("ghost",list("beep"=9, "duration" = 5))
+sound_map$set("finish",list("beep"=3, "duration" = 3))
 
+play <- function(sound_map, x) {
+  sound <- sound_map$get(x)
+  beep(sound$beep)
+  Sys.sleep(sound$duration)
+}
+
+WALL <- 0
 CORRIDOR <- 1
 EXIT <- 9
 GHOST <- 2
 PLAYER <- 5
+
+mapping <- dict()
+mapping$set(WALL, list("block"="🏾 ","desc"="wall")) #⛰  ◾■🔳
+mapping$set(CORRIDOR, list("block"="🏻 ","desc"="corridor"))# □ ◻ ◽
+mapping$set(GHOST,  list("block"="👻 ", "desc"="ghost" ))#🎃🧟🕷
+mapping$set(EXIT,   list("block"="⛩ "  ,"desc"="exit"))
+mapping$set(PLAYER, list("block"="🚹 ","desc"="player"))
+
+
+
 DIRECTIONS <- c("N", "E", "S", "W")
 GHOST_SPEED <- 3
 
-
 #https://stackoverflow.com/questions/27112370/make-readline-wait-for-input-in-r
-
-user.input <- function(prompt) {
+user_input <- function(prompt) {
   if (interactive()) {
     return(readline(prompt))
   } else {
@@ -38,6 +59,13 @@ user.input <- function(prompt) {
   }
 }
 
+clear_screen <- function() {
+  if (interactive()) {
+    cat("\014") #cat("\f")
+  } else {
+    cat("\33[2J")
+  }
+}
 
 get_random_position <- function (maze) {
   row_lower_limit <- 2
@@ -54,16 +82,12 @@ get_random_position <- function (maze) {
   }
 }
 
-
 render_bye <- function() {
-  
-  cat("🎉 🎊 👏 👏 👏")
-  
+  cat("🎉 🎊 👏 👏 👏\n")
 }
 
-
 render_ghost <- function() {
-  
+  clear_screen()
   cat(paste(("________________________________________________________________________________________"),
   ("_______________________UUUUHHHHHHH UHHHHHHHH GOT YOU!___________________________________"),
   ("________________________________________________________________________________________"),
@@ -133,7 +157,6 @@ get_position_forward <- function(current_position, direction) {
   position_forward
 }
 
-
 #  FTF
 #  TXT
 #  FTF
@@ -154,7 +177,7 @@ get_graphics <- function(maze_view,mapping) {
   
   nrow <- nrow(maze_view)
   ncol <- ncol(maze_view)
-  matrix(lapply(c(maze_view),mapping$get), nrow,ncol)
+  matrix(lapply(lapply(c(maze_view),mapping$get),function(x) {return (x$block)}), nrow,ncol)
   
 }
 
@@ -174,7 +197,6 @@ what_player_can_see <- function (maze, player_position, ghost_position, directio
     start_col <- player_position$col - 1 
     end_col <- player_position$col + 1 
     number_rot <- 0
-    
   }
   else if (direction == "W") {
     start_row <- player_position$row - 1
@@ -215,28 +237,39 @@ what_player_can_see <- function (maze, player_position, ghost_position, directio
 }
 
 
-render_view <- function(maze, direction) {
+render_view <- function(maze, direction, action_map) {
   
-
-  #cat("\014") 
-  cat("\f")
-  cat("\t**** GHOST MAZE ****\n")
-  cat("\t  FORWARD    👆: x\n")
-  cat("\t  TURN LEFT  👈: n\n")
-  cat("\t  TURN RIGHT 👉: m\n")
-  cat("\t  QUIT       👋: q\n")
-  cat("\n")
+  clear_screen()
+  cat("
+ @@@@@@@  @@@  @@@  @@@@@@   @@@@@@ @@@@@@@    @@@@@@@@@@   @@@@@@  @@@@@@@@ @@@@@@@@ 
+!@@       @@!  @@@ @@!  @@@ !@@       @!!      @@! @@! @@! @@!  @@@      @@! @@!      
+!@! @!@!@ @!@!@!@! @!@  !@!  !@@!!    @!!      @!! !!@ @!@ @!@!@!@!    @!!   @!!!:!   
+:!!   !!: !!:  !!! !!:  !!!     !:!   !!:      !!:     !!: !!:  !!!  !!:     !!:      
+ :: :: :   :   : :  : :. :  ::.: :     :        :      :    :   : : :.::.: : : :: ::  
+  ")
+  cat("\n\n")
   #print(sprintf("Player direction: %s", player_direction))
   #print(sprintf("Player position: %d,%d", player_position$row, player_position$col))
   #print(sprintf("Ghost position: %d,%d", ghost_position$row, ghost_position$col))
   #print(kable(maze, "simple", align = "ccc"))
-  
-  cat("\t🏿 🏿 🏿 🏿 🏿 🏿\n")
-  cat(paste("\t🏿 ",apply(maze, 1, paste, collapse = ""),"🏿 ", collapse = "\n"))
-  cat("\n\t🏿 🏿 🏿 🏿 🏿 🏿\n")
+  cat("\t\t\t🏿 🏿 🏿 🏿 🏿 🏿\n")
+  cat(paste("\t\t\t🏿 ",apply(maze, 1, paste, collapse = ""),"🏿 ", collapse = "\n"))
+  cat("\n\t\t\t🏿 🏿 🏿 🏿 🏿 🏿\n")
   cat("\n")
 
   
+  cat("\t\t\tMap legend\n")
+  for(stripe in mapping$values()) {
+    cat(paste0("\t\t\t",stripe$block," ", stripe$desc,"\n"))
+  }
+  cat("\n")
+  
+  cat("\t\t\tActions\n")
+  for(action in action_map$keys()) {
+    cat(paste0("\t\t\t",action_map$get(action)$desc," ", paste(action_map$get(action)$keys,collapse=" or ") ,"\n"))
+  }
+  cat("\n")
+
 }
 
 turn <- function(direction, towards) {
@@ -264,17 +297,10 @@ maze.data <- c(maze.data,0,0,1,1,1,1,1,1,0,0)
 maze.data <- c(maze.data,0,0,0,0,0,0,9,0,0,0)
 maze = matrix(maze.data,nrow=7,ncol=10,byrow=TRUE);
 
-#maze.data <- c(1,1,1,1,1)
-#maze.data <- c(maze.data,0,0,0,0,0)
-#maze.data <- c(maze.data,0,1,1,1,0)
-#maze.data <- c(maze.data,0,1,1,1,0)
-#maze.data <- c(maze.data,0,1,9,1,0)
-#maze = matrix(maze.data,nrow=5,ncol=5,byrow=TRUE);
-
 
 player_position <- get_random_position(maze)
 ghost_position <- get_random_position(maze)
-#maze <- move_to(maze, GHOST, ghost_position)
+
 ghost_moves <- 0
 player_direction <- get_random_direction()
 player_moves_since_last_ghost_move <- 0
@@ -295,8 +321,7 @@ while(game) {
     if (is_next_to(player_position, ghost_position)) {
       if(ghost_moves > 1) {
         render_ghost()
-        beep(9)
-        Sys.sleep(3)
+        sound_map %>% play("ghost")
       }
       ghost_position <- get_random_position(maze)
       player_position <- get_random_position(maze)
@@ -308,30 +333,27 @@ while(game) {
   }
   
   maze_view <- what_player_can_see(maze = maze,player_position = player_position, ghost_position = ghost_position, direction = player_direction)
-  render_view(get_graphics(maze_view,mapping))
+  render_view(get_graphics(maze_view,mapping),player_direction,action_map)
   
   repeat {
     
-    action <- user.input("Choose your next move (x,n,m,q) and press enter:")
+    action <- user_input("Choose your next move and press enter:")
     
-    if( action %in% c("N","n")) {
+    if( action %in% action_map$get("turnl")$keys) {
       cat(sprintf("%s: turning left 👈\n", action))
-      beep(1)
-      Sys.sleep(1)
+      sound_map %>% play("move")
       player_direction <- turn(player_direction,"LEFT")
       player_moves_since_last_ghost_move <- player_moves_since_last_ghost_move + 1
       break
-    } else if (action %in% c("M","m")) {
+    } else if (action %in% action_map$get("turnr")$keys) {
       cat(sprintf("%s: turning right 👉\n", action))
-      beep(1)
-      Sys.sleep(1)
+      sound_map %>% play("move")
       player_direction <- turn(player_direction,"RIGHT")
       player_moves_since_last_ghost_move <- player_moves_since_last_ghost_move + 1
       break
-    } else if (action %in% c("X","x")) {
+    } else if (action %in% action_map$get("walk")$keys) {
       cat(sprintf("%s: moving forward 👆\n", action))
-      beep(1)
-      Sys.sleep(1)
+      sound_map %>% play("move")
       next_position <- get_position_forward(player_position, player_direction)
       # Wall collision
       if(can_move_to(maze,next_position)) {
@@ -340,7 +362,7 @@ while(game) {
         if(is_exit(maze,player_position)) {
           cat(sprintf("You have escaped in %d moves\n", ghost_moves * GHOST_SPEED + player_moves_since_last_ghost_move))
           render_bye()
-          Sys.sleep(2)
+          sound_map %>% play("finish")
           game <- FALSE
         }
         break
@@ -349,11 +371,13 @@ while(game) {
         cat("You are a muggle, you cannot walk through the wall!!\n")
       }
       
-    } else if (action %in% c("Q","q")) {
+    } else if (action %in% action_map$get("quit")$keys) {
       cat(sprintf("%s: leaving...\n", action))
-      beep(6)
-      Sys.sleep(1)
+      sound_map %>% play("quit")
       cat("We miss you already\n")
+      game <- FALSE
+      break
+    }  else if (action %in% c("x","X")) {
       game <- FALSE
       break
     }
