@@ -60,6 +60,7 @@ sound_map <- dict()
 sound_map$set("move",list("beep"=10, "duration" = 0))
 sound_map$set("quit",list("beep"=6, "duration" = 1))
 sound_map$set("ghost",list("beep"=9, "duration" = 3))
+sound_map$set("zombie",list("beep"=9, "duration" = 3))
 sound_map$set("finish",list("beep"=3, "duration" = 3))
 sound_map$set("intro",list("beep"=8, "duration" = 6))
 
@@ -96,11 +97,11 @@ user_input <- function(prompt) {
 #   note = "[Online; accessed 5-October-2022]"
 # }
 clear_screen <- function() {
-  # if (interactive()) {
-  #   cat("\014") #cat("\f")
-  # } else {
-  #   cat("\33[2J")
-  # }
+  if (interactive()) {
+    cat("\014") #cat("\f")
+  } else {
+    cat("\33[2J")
+  }
 }
 
 #
@@ -137,6 +138,8 @@ render_bye <- function() {
 }
 
 #
+#https://manytools.org/hacker-tools/ascii-banner/
+#Font:poison
 title <- function() {
   title <-  "                                                                                                                     
 @@@@@@@@@@    @@@@@@   @@@  @@@   @@@@@@  @@@@@@@  @@@@@@@@  @@@@@@@      @@@@@@@@@@    @@@@@@   @@@@@@@@  @@@@@@@@  
@@ -152,7 +155,25 @@ title <- function() {
                                                                                                                       "
 }
 
+game_over <- function() {
+  msg <- "                                                                               
+                                                                                       
+ @@@@@@@@   @@@@@@   @@@@@@@@@@   @@@@@@@@      @@@@@@   @@@  @@@  @@@@@@@@  @@@@@@@   
+@@@@@@@@@  @@@@@@@@  @@@@@@@@@@@  @@@@@@@@     @@@@@@@@  @@@  @@@  @@@@@@@@  @@@@@@@@  
+!@@        @@!  @@@  @@! @@! @@!  @@!          @@!  @@@  @@!  @@@  @@!       @@!  @@@  
+!@!        !@!  @!@  !@! !@! !@!  !@!          !@!  @!@  !@!  @!@  !@!       !@!  @!@  
+!@! @!@!@  @!@!@!@!  @!! !!@ @!@  @!!!:!       @!@  !@!  @!@  !@!  @!!!:!    @!@!!@!   
+!!! !!@!!  !!!@!!!!  !@!   ! !@!  !!!!!:       !@!  !!!  !@!  !!!  !!!!!:    !!@!@!    
+:!!   !!:  !!:  !!!  !!:     !!:  !!:          !!:  !!!  :!:  !!:  !!:       !!: :!!   
+:!:   !::  :!:  !:!  :!:     :!:  :!:          :!:  !:!   ::!!:!   :!:       :!:  !:!  
+ ::: ::::  ::   :::  :::     ::    :: ::::     ::::: ::    ::::     :: ::::  ::   :::  
+ :: :: :    :   : :   :      :    : :: ::       : :  :      :      : :: ::    :   : :  
+                                                                                        "
+}
+
+
 #
+#https://textart.sh/topic/ghost
 ghost_intro <- function() {
 ghost_intro <- "
 ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
@@ -190,7 +211,7 @@ ghost_intro <- "
 #
 ghost_encounter <- function() {
   ghost_encounter <-"  ________________________________________________________________________________________
-  _______________________ BOOOO BOOOOOOO!   GOT YOU!   ___________________________________
+  _______________________ BOOOO BOOOOOOO!   SHUFFLE!   ___________________________________
   ________________________________________________________________________________________
   ░░______░░______░░____________░░__░░__░░__░░██______░░__░░░░______________░░______░░__░░
   ______________________░░__________________██████__________________░░____________________
@@ -217,6 +238,39 @@ ghost_encounter <- function() {
   ________________________________________██████████______________________________________
   ________________________________________________________________________________________
   ________________________________________________________________________________________"
+}
+
+zombie_encounter <- function() {
+  zombie_encounter <- "░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░██████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░████░░░░░░░░░░░░░░████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░██░░░░██░░░░░░░░░░██░░░░██░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░██░░░░░░░░░░░░░░░░░░░░░░░░░░██░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░██░░░░░░██░░░░░░░░░░██░░░░░░██░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+░░░░░░░░░░░░░░░░░░░░░░░░░░░░██░░██░░░░░░░░░░░░░░░░░░░░░░██░░██░░░░░░░░░░░░░░░░░░░░░░░░░░
+░░░░░░░░░░░░░░░░░░░░░░░░░░░░██░░░░░░░░██░░░░░░░░░░██░░░░░░░░██░░░░░░░░░░░░░░░░░░░░░░░░░░
+░░░░░░░░░░░░░░░░░░░░░░░░░░░░██░░██░░░░░░░░██░░██░░░░░░░░██░░██░░░░░░░░░░░░░░░░░░░░░░░░░░
+░░░░░░░░░░░░░░░░░░░░░░░░░░██░░░░░░░░░░▒▒▒▒░░░░░░▒▒▒▒░░░░░░░░░░██░░░░░░░░░░░░░░░░░░░░░░░░
+░░░░░░░░░░░░░░░░░░░░░░░░░░██░░░░░░░░░░░░░░▒▒▒▒▒▒░░░░░░░░░░░░░░██░░░░░░░░░░░░░░░░░░░░░░░░
+░░░░░░░░░░░░░░░░░░░░░░░░░░██░░░░░░████████░░▒▒░░████████░░░░░░██░░░░░░░░░░░░░░░░░░░░░░░░
+░░░░░░░░░░░░░░░░░░░░░░░░░░██░░░░░░████████░░░░░░████████░░░░░░██░░░░░░░░░░░░░░░░░░░░░░░░
+░░░░░░░░░░░░░░░░░░░░░░░░░░░░██░░░░░░████░░░░░░░░░░████░░░░░░██░░░░░░░░░░░░░░░░░░░░░░░░░░
+░░░░░░░░░░░░░░░░░░░░░░░░░░░░██░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░██░░░░░░░░░░░░░░░░░░░░░░░░░░
+░░░░░░░░░░░░░░░░░░░░░░░░░░░░██░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░██░░░░░░░░░░░░░░░░░░░░░░░░░░
+░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░██░░░░░░▒▒░░░░░░░░░░▒▒░░░░░░██░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░██░░░░▒▒░░░░██░░██░░░░▒▒░░░░██░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░██▒▒░░██░░░░░░░░░░██░░▒▒██░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░██░░░░░░░░██░░██░░░░░░░░██░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░██░░░░░░░░░░░░░░░░░░██░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░██░░░░██░░██░░░░██░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░██░░░░░░░░░░██░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░██████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░"
+
 }
 
 #
@@ -265,16 +319,22 @@ calc_distance <- function(position_1, position_2) {
 #  FTF
 #  TXT
 #  FTF
-is_next_to <- function(position_1, position_2) {
+is_next_to <- function(position_1, position_2, max_distance) {
   distance <- calc_distance(position_1 = position_1, position_2 = position_2)
-  if(distance > 1) {
+  if(distance > max_distance) {
     return(FALSE)
   }
   TRUE
 }
 
+#
 is_player_next_to_any_ghost <-  function(position_1, positions) {
-  Reduce('|',lapply(positions,is_next_to,position_1 = position_1))
+  Reduce('|',lapply(positions,is_next_to,position_1 = position_1, max_distance = 1))
+}
+
+#
+is_player_caught_by_any_zombie <- function(player_position, zombie_positions) {
+  Reduce('|',lapply(zombie_positions,is_next_to,position_1 = player_position, max_distance = 0))
 }
 
 #
@@ -288,11 +348,10 @@ get_graphics <- function(maze_view,graph_map) {
 rotate_clockwise <- function(x) {t( apply(x, 2, rev))}
 
 #
-what_player_can_see <- function (maze, player_position, ghost_positions, direction, distance = 4) {
+what_player_can_see <- function (maze, player_position, ghost_positions, direction, forward_vision = 4, rear_vision = 0) {
   
-  lateral_distance <- floor((distance - 1)/2)
-  rear_vision <- 2
-  padding <- distance
+  lateral_vision <- floor((forward_vision - 1)/2)
+  padding <- forward_vision
   number_rot <- 0
   meta_maze <- matrix(0,nrow(maze) + (2 * padding), ncol(maze) + (2 * padding))
   meta_maze[(1 + padding):(nrow(maze) + padding ), (1 + padding):(ncol(maze) + padding)] <- maze
@@ -303,31 +362,31 @@ what_player_can_see <- function (maze, player_position, ghost_positions, directi
     meta_maze[zombie_position$row + padding,zombie_position$col + padding] <- ZOMBIE
   }
   if(direction == "N") {
-    start_row <- player_position$row  - distance
+    start_row <- player_position$row  - forward_vision
     end_row <- player_position$row + rear_vision
-    start_col <- player_position$col - lateral_distance 
-    end_col <- player_position$col + lateral_distance 
+    start_col <- player_position$col - lateral_vision
+    end_col <- player_position$col + lateral_vision 
     number_rot <- 0
   }
   else if (direction == "W") {
-    start_row <- player_position$row - lateral_distance
-    end_row <- player_position$row + lateral_distance 
-    start_col <- player_position$col - distance
+    start_row <- player_position$row - lateral_vision
+    end_row <- player_position$row + lateral_vision 
+    start_col <- player_position$col - forward_vision
     end_col <- player_position$col + rear_vision
     number_rot <- 1
   }
   else if (direction == "S") {
     start_row <- player_position$row - rear_vision
-    end_row <- player_position$row + distance
-    start_col <- player_position$col - lateral_distance 
-    end_col <- player_position$col + lateral_distance 
+    end_row <- player_position$row + forward_vision
+    start_col <- player_position$col - lateral_vision
+    end_col <- player_position$col + lateral_vision 
     number_rot <- 2
   }
   else if (direction == "E") {
-    start_row <- player_position$row - lateral_distance
-    end_row <- player_position$row + lateral_distance
+    start_row <- player_position$row - lateral_vision
+    end_row <- player_position$row + lateral_vision
     start_col <- player_position$col - rear_vision
-    end_col <- player_position$col + distance
+    end_col <- player_position$col + forward_vision
     number_rot <- 3
   }
   start_row <- start_row + padding
@@ -343,7 +402,7 @@ what_player_can_see <- function (maze, player_position, ghost_positions, directi
     count_rot <- count_rot + 1
   }
 
-  maze_view[nrow(maze_view) - rear_vision,lateral_distance + 1] <- PLAYER
+  maze_view[nrow(maze_view) - rear_vision,lateral_vision  + 1] <- PLAYER
   maze_view
 }
 
@@ -375,6 +434,7 @@ render_view <- function(maze, direction, action_map, graph_map) {
     pane2[map_idx,"Map"] <- paste0(".\t\t\t",line)
     map_idx <- map_idx + 1
   }
+  
 
   pane1[1,"Legend"] <- "Legend"
   legend_idx <- 2
@@ -395,6 +455,7 @@ render_view <- function(maze, direction, action_map, graph_map) {
   
   cat("\n")
   cat(paste(pane1,collapse="\n"))
+  cat(paste0("Lives: ", paste(rep("🧡",lives),sep="",collapse=" "),"\n"))
   cat(paste(pane2,collapse="\n"))
   cat("\n\n\n\n\n")
 }
@@ -498,13 +559,13 @@ shuffle <- function(maze, num_ghosts = 1, num_zombies = 0, occupied_positions = 
 }
 
 # Mazes
-maze1_data <-            c(0,0,0,1,1,1,1,1,0,0)
+maze1_data <-            c(0,0,0,0,0,0,0,0,0,0)
 maze1_data <- c(maze1_data,0,1,1,1,1,0,0,1,1,0)
 maze1_data <- c(maze1_data,0,0,1,0,0,1,1,1,0,0)
 maze1_data <- c(maze1_data,0,0,1,1,0,1,0,1,1,0)
 maze1_data <- c(maze1_data,0,1,1,0,1,0,0,1,0,0)
 maze1_data <- c(maze1_data,0,1,1,1,1,1,1,1,0,0)
-maze1_data <- c(maze1_data,0,1,0,0,0,0,0,9,0,0)
+maze1_data <- c(maze1_data,0,0,0,0,0,0,0,9,0,0)
 maze1 = matrix(maze1_data,nrow=7,ncol=10,byrow=TRUE);
 
 maze2_data <-            c(0,0,0,0,0,0,0,0,0,0,0,0,0)
@@ -515,11 +576,11 @@ maze2_data <- c(maze2_data,0,0,0,1,0,1,0,1,1,1,1,1,0)
 maze2_data <- c(maze2_data,0,0,1,1,0,1,0,1,1,0,0,1,0)
 maze2_data <- c(maze2_data,0,1,1,0,9,0,0,1,0,0,0,1,0)
 maze2_data <- c(maze2_data,0,0,1,1,1,1,1,1,0,0,0,1,0)
-maze2_data <- c(maze2_data,0,0,0,0,0,0,1,0,0,0,0,0,0)
+maze2_data <- c(maze2_data,0,0,0,0,0,0,0,0,0,0,0,0,0)
 maze2 = matrix(maze2_data,nrow=9,ncol=13,byrow=TRUE);
 
 
-maze3_data <-            c(0,0,0,0,0,1,0,0,0,0,0,1,0,0,0)
+maze3_data <-            c(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)
 maze3_data <- c(maze3_data,0,1,1,1,0,1,1,0,1,1,0,1,1,0,0)
 maze3_data <- c(maze3_data,0,1,0,1,1,1,1,0,1,1,1,1,0,0,0)
 maze3_data <- c(maze3_data,0,1,1,1,1,1,1,0,1,1,1,1,0,0,0)
@@ -530,26 +591,30 @@ maze3_data <- c(maze3_data,0,0,1,1,0,1,1,0,1,1,1,1,1,1,0)
 maze3_data <- c(maze3_data,0,0,1,1,0,1,1,9,1,1,0,0,0,1,0)
 maze3_data <- c(maze3_data,0,1,1,1,1,1,1,0,1,1,1,1,0,0,0)
 maze3_data <- c(maze3_data,0,1,1,1,1,1,1,0,1,1,0,1,0,0,0)
-maze3_data <- c(maze3_data,0,1,1,0,1,0,1,1,1,1,1,1,1,1,1)
-maze3_data <- c(maze3_data,0,0,1,1,1,1,1,0,1,0,0,0,1,0,1)
-maze3_data <- c(maze3_data,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1)
+maze3_data <- c(maze3_data,0,1,1,0,1,0,1,1,1,1,1,1,1,1,0)
+maze3_data <- c(maze3_data,0,0,1,1,1,1,1,0,1,0,0,0,1,0,0)
+maze3_data <- c(maze3_data,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)
 maze3 = matrix(maze3_data,nrow=15,ncol=15,byrow=TRUE);
 
 
 mazes <- list(
-  maze1#,
+  #maze1#,
 #  maze2,
-#  maze3
+  maze3
   )
 
-distance <- 8
-num_ghosts <- 1
-num_zombies <- 0
-GHOST_SPEED <- 10
+forward_vision <- 8 
+rear_vision <- 0
+num_ghosts <- 2
+num_zombies <- 3
+ghost_speed <- 10
+zombie_speed <- 3
+lives <- 5
+maze <- mazes[[sample(1:length(mazes),1)]]
+
 
 # Game init
 set.seed(NULL)  
-maze <- mazes[[sample(1:length(mazes),1)]]
 
 after_shuffle <- shuffle(maze=maze, num_ghosts= num_ghosts, num_zombies = num_zombies)
 player_position <- after_shuffle$player_position
@@ -558,6 +623,9 @@ ghost_positions <- after_shuffle$ghost_positions
 zombie_positions <- after_shuffle$zombie_positions
 ghost_moves <- 0
 player_moves_since_last_ghost_move <- 0
+zombie_moves <- 0
+player_moves_since_last_zombie_move <- 0
+player_moves <- 0
 game <- TRUE
 
 # Play Intro
@@ -567,87 +635,120 @@ echo(ghost_intro(),sound_map,"intro")
 # Game loop
 while(game) {
 
-  #ghost_moves according to ghost speed
-  if (player_moves_since_last_ghost_move == GHOST_SPEED) {
-    zombie_positions <- move_zombies(maze=maze,zombie_positions = zombie_positions, player_position = player_position)
-    ghost_positions <- get_random_positions(maze = maze, num = num_ghosts, occupied_positions = c(player_direction,zombie_positions))
-    ghost_moves <- ghost_moves +  1
-    player_moves_since_last_ghost_move <- 0
-  }
-
-  #ghost player collision detection
+  #monster (ghost,zombie) player collision detection
   repeat {
     if (is_player_next_to_any_ghost(player_position, ghost_positions)) {
-      if(ghost_moves > 1 || player_moves_since_last_ghost_move > 1) {
-        echo(ghost_encounter(), sound_map,"ghost")
+      
+      if(ghost_moves > 1 || player_moves_since_last_ghost_move >= 1) {
+        echo(ghost_encounter(), sound_map,"ghost",clear = T)
       }
       #zombies are not shuffled, they keep their positions
-      after_shuffle<- shuffle(maze=maze, num_ghosts= num_ghosts, num_zombies = 0, occupied_positions = zombie_positions)
+      after_shuffle <- shuffle(maze=maze, num_ghosts= num_ghosts, num_zombies = 0, occupied_positions = zombie_positions)
       player_position <- after_shuffle$player_position
       player_direction <- after_shuffle$player_direction
       ghost_positions <- after_shuffle$ghost_positions
+    }
+    else if (is_player_caught_by_any_zombie(player_position, zombie_positions)) {
+      if(zombie_moves > 1 || player_moves_since_last_zombie_move >= 1) {
+        echo(zombie_encounter(), sound_map,"zombie", clear = T)
+      }
+      #zombies are not shuffled, they keep their positions
+      after_shuffle <- shuffle(maze=maze, num_ghosts= 0, num_zombies = num_zombies, occupied_positions = ghost_positions)
+      player_position <- after_shuffle$player_position
+      player_direction <- after_shuffle$player_direction
+      zombie_positions <- after_shuffle$zombie_positions
+      lives <- lives - 1
     }
     else {
       break
     }
   }
   
-  #what the player can see
-  maze_view <- what_player_can_see(maze = maze,
-                                   player_position = player_position, 
-                                   ghost_positions = ghost_positions,
-                                   direction = player_direction,
-                                   distance = distance)
-  
-  #render player view
-  render_view(get_graphics(maze_view,graph_map),player_direction,action_map, graph_map)
-  
-  #player input 
-  repeat {
-    input <- user_input("Choose your next move and press enter: ")
-    if (input %in% action_map$get("turnl")$keys) {
-      action <- action_map$get("turnl")
-      echo(sprintf(action$echo, input),sound_map,"move")
-      player_direction <- turn(player_direction,"LEFT")
-      player_moves_since_last_ghost_move <- player_moves_since_last_ghost_move + 1
-      break
-    } 
-    else if (input %in% action_map$get("turnr")$keys) {
-      action <- action_map$get("turnr")
-      echo(sprintf(action$echo, input),sound_map,"move")
-      player_direction <- turn(player_direction,"RIGHT")
-      player_moves_since_last_ghost_move <- player_moves_since_last_ghost_move + 1
-      break
-    } 
-    else if (input %in% action_map$get("walk")$keys) {
-      action <- action_map$get("walk")
-      echo(sprintf(action$echo, input),sound_map,"move")
-      next_position <- get_position_forward(player_position, player_direction)
-      # Wall player collision detection
-      if(can_move_to(maze,next_position)) {
-        player_position <- next_position
+  if(lives == 0) {
+    game <- FALSE
+    echo(msg=game_over(),clear= TRUE)
+  }
+  else {
+
+    #what the player can see
+    maze_view <- what_player_can_see(maze = maze,
+                                     player_position = player_position, 
+                                     ghost_positions = ghost_positions,
+                                     direction = player_direction,
+                                     forward_vision = forward_vision,
+                                     rear_vision  = rear_vision)
+    
+    #render player view
+    render_view(get_graphics(maze_view,graph_map),player_direction,action_map, graph_map)
+    
+    #player input 
+    repeat {
+      input <- user_input("Choose your next move and press enter: ")
+      if (input %in% action_map$get("turnl")$keys) {
+        action <- action_map$get("turnl")
+        echo(sprintf(action$echo, input),sound_map,"move")
+        player_direction <- turn(player_direction,"LEFT")
         player_moves_since_last_ghost_move <- player_moves_since_last_ghost_move + 1
-        if(is_exit(maze,player_position)) {
-          render_bye()
-          echo(sprintf("You have escaped in %d moves\n", ghost_moves * GHOST_SPEED + player_moves_since_last_ghost_move),sound_map,"finish")
-          game <- FALSE
+        player_moves_since_last_zombie_move <- player_moves_since_last_zombie_move + 1
+        player_moves <- player_moves + 1
+        break
+      } 
+      else if (input %in% action_map$get("turnr")$keys) {
+        action <- action_map$get("turnr")
+        echo(sprintf(action$echo, input),sound_map,"move")
+        player_direction <- turn(player_direction,"RIGHT")
+        player_moves_since_last_ghost_move <- player_moves_since_last_ghost_move + 1
+        player_moves_since_last_zombie_move <- player_moves_since_last_zombie_move + 1
+        player_moves <- player_moves + 1
+        break
+      } 
+      else if (input %in% action_map$get("walk")$keys) {
+        action <- action_map$get("walk")
+        echo(sprintf(action$echo, input),sound_map,"move")
+        next_position <- get_position_forward(player_position, player_direction)
+        # Wall player collision detection
+        if(can_move_to(maze,next_position)) {
+          player_position <- next_position
+          player_moves_since_last_ghost_move <- player_moves_since_last_ghost_move + 1
+          player_moves_since_last_zombie_move <- player_moves_since_last_zombie_move + 1
+          player_moves <- player_moves + 1
+          if(is_exit(maze,player_position)) {
+            render_bye()
+            echo(sprintf("You have escaped in %d moves\n", ghost_moves * ghost_speed + player_moves_since_last_ghost_move),sound_map,"finish")
+            game <- FALSE
+          }
+          break
         }
+        else {
+          cat("You are a muggle, you cannot walk through the walls!!\n")
+        }
+      } 
+      else if (input %in% action_map$get("quit")$keys) {
+        action <- action_map$get("quit")
+        echo(sprintf(action$echo, input),sound_map,"quit")
+        echo("We miss you already\n")
+        game <- FALSE
+        break
+      } 
+      else if (input %in% c("x","X")) {
+        game <- FALSE
         break
       }
-      else {
-        cat("You are a muggle, you cannot walk through the walls!!\n")
-      }
-    } 
-    else if (input %in% action_map$get("quit")$keys) {
-      action <- action_map$get("quit")
-      echo(sprintf(action$echo, input),sound_map,"quit")
-      echo("We miss you already\n")
-      game <- FALSE
-      break
-    } 
-    else if (input %in% c("x","X")) {
-      game <- FALSE
-      break
     }
+    
+    #ghosts move according to ghost speed
+    if (player_moves_since_last_ghost_move == ghost_speed) {
+      ghost_positions <- get_random_positions(maze = maze, num = num_ghosts, occupied_positions = c(player_direction,zombie_positions))
+      ghost_moves <- ghost_moves +  1
+      player_moves_since_last_ghost_move <- 0
+    }
+    
+    #zombies move according to zombie speed
+    if (player_moves_since_last_zombie_move == zombie_speed) {
+      zombie_positions <- move_zombies(maze=maze,zombie_positions = zombie_positions, player_position = player_position)
+      zombie_moves <- zombie_moves +  1
+      player_moves_since_last_zombie_move <- 0
+    }
+    
   }
 }
