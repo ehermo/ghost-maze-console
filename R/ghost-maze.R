@@ -17,6 +17,7 @@ require(beepr)
 require(dplyr)
 require(invctr)
 require(stringr)
+require(purrr)
 
 # Constants
 NONE <- -1
@@ -64,28 +65,33 @@ sound_map$set("zombie",list("beep"=9, "duration" = 3))
 sound_map$set("finish",list("beep"=3, "duration" = 3))
 sound_map$set("intro",list("beep"=8, "duration" = 6))
 
+#https://invisible-characters.com/
+#graph_sep="\U17B5"
+#graph_sep=" "
+graph_sep="\U17B5\U2063" # each invisible char works on a different terminal
 graph_map <- dict()
-graph_map$set(WALL, list("block"="🏾\U17B5","desc"="wall")) #⛰  ◾■🔳
+graph_map$set(WALL, list("block"=paste0("🏾",graph_sep),"desc"="wall")) #⛰  ◾■🔳
 #graph_map$set(WALL, list("block"="\U1F3FE","desc"="wall"))
 #graph_map$set(WALL, list("block"="⬛ ","desc"="wall")) 
-graph_map$set(CORRIDOR, list("block"="🏻\U17B5","desc"="corridor"))# □ ◻ ◽
+graph_map$set(CORRIDOR, list("block"=paste0("🏻",graph_sep),"desc"="corridor"))# □ ◻ ◽
 #graph_map$set(CORRIDOR, list("block"="\U1F3FB","desc"="corridor"))# □ ◻ ◽
 #graph_map$set(CORRIDOR, list("block"="⬜ ","desc"="corridor"))
 
-graph_map$set(GHOST,  list("block"="👻\U17B5", "desc"="ghost" ))#🎃🧟🕷 🧛 🧟
+graph_map$set(GHOST,  list("block"=paste0("👻",graph_sep), "desc"="ghost" ))#🎃🧟🕷 🧛 🧟
 #graph_map$set(GHOST,  list("block"="\U1F47B", "desc"="ghost" ))#🎃🧟🕷 🧛 🧟
 
 #graph_map$set(EXIT,   list("block"="⛩ "  ,"desc"="exit"))
-graph_map$set(EXIT,   list("block"="🏆\U17B5"  ,"desc"="exit"))
+graph_map$set(EXIT,   list("block"=paste0("🏆",graph_sep)  ,"desc"="exit"))
 #graph_map$set(EXIT,   list("block"="\U1F3C6"  ,"desc"="exit"))
 
 #graph_map$set(EXIT,   list("block"="🏁 "  ,"desc"="exit"))
-graph_map$set(PLAYER, list("block"="🚹\U17B5","desc"="player")) #🚺 1F6BA
+#graph_map$set(PLAYER, list("block"="🚹\U17B5","desc"="player")) #🚺 1F6BA
+graph_map$set(PLAYER, list("block"=paste0("\U1F464",graph_sep),"desc"="player")) #🚺 1F6BA
 #graph_map$set(PLAYER, list("block"="\U1F9DF","desc"="player")) 
 
 #graph_map$set(SIGHT, list("block"="🏿\U3164","desc"="visual field limit"))
 #graph_map$set(SIGHT, list("block"="🌑 ", "desc"="visual field limit"))
-graph_map$set(ZOMBIE, list("block"="🧟\U17B5","desc"="zombie"))
+graph_map$set(ZOMBIE, list("block"=paste0("🧟",graph_sep),"desc"="zombie"))
 #graph_map$set(ZOMBIE, list("block"="\U1F9DF","desc"="zombie"))
 
 
@@ -497,13 +503,17 @@ echo <- function(msg, sound_map = NULL, sound_key=NULL, clear = FALSE, duration 
 }
 
 #
-get_closer_to_player <- function(maze, position_1, position_2) {
+get_closer_to_player <- function(maze, position_1, position_2, occupied_positions) {
    maze_layer <- matrix(0,nrow=nrow(maze),ncol=ncol(maze))
    maze_layer[(position_1$row-1):(position_1$row+1), (position_1$col-1):(position_1$col+1)] <- maze[(position_1$row-1):(position_1$row+1), (position_1$col-1):(position_1$col+1)]
    corridor <- CORRIDOR %ai% maze_layer # gets the indeces for all CORRIDOR places in the around
    curr_distance <- calc_distance(position_1 = position_1, position_2 = position_2)
    for (i in 1:nrow(corridor)) {
      new_position <- new_position(row=corridor[i,]$row,col=corridor[i,]$col)
+     if(has_element(occupied_positions,new_position)) 
+     {
+       next
+     }
      new_distance <- calc_distance(new_position, position_2)
      if (new_distance < curr_distance) {
        return(new_position)
@@ -513,10 +523,22 @@ get_closer_to_player <- function(maze, position_1, position_2) {
 }
 
 #
-move_zombies <- function(maze, zombie_positions, player_position) {
+remove_position_from_list <- function(position, list) {
+  this_position <- position
+  list %>% discard(function(x,position = this_position) {
+    return(x$row == position$row && x$col == position$col)
+  })
+}
+
+#
+move_zombies <- function(maze, zombie_positions = list(), ghost_positions = list(), player_position) {
   new_zombie_positions <- list()
+  occupied_positions <- c(zombie_positions,ghost_positions)
   for(zombie_position in zombie_positions) {
-    new_zombie_positions <- append(new_zombie_positions,list(get_closer_to_player(maze = maze, position_1=zombie_position,position_2=player_position)))
+    occupied_positions <- remove_position_from_list(position = zombie_position, list = occupied_positions)
+    new_zombie_position <- get_closer_to_player(maze = maze, position_1=zombie_position,position_2=player_position, occupied_positions = occupied_positions)
+    new_zombie_positions <- append(new_zombie_positions,list(new_zombie_position))
+    occupied_positions <- append(occupied_positions, list(new_zombie_position))
   }
   return(new_zombie_positions)
 }
@@ -649,8 +671,8 @@ check_collision_monster_player <- function(player_position, ghost_positions, zom
   return(collision)
 }
 
-# Mazes
 
+# Mazes
 maze0_data <-            c(0,0,0,0,0,0,0,0,0,0)
 maze0_data <- c(maze0_data,0,0,0,0,9,0,0,0,0,0)
 maze0_data <- c(maze0_data,0,1,1,1,1,1,1,1,1,0)
@@ -698,10 +720,10 @@ maze3_data <- c(maze3_data,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)
 maze3 = matrix(maze3_data,nrow=15,ncol=15,byrow=TRUE);
 
 mazes <- list(
-  maze0
+  #maze0
   #maze1#,
   #maze2,
-  #maze3
+  maze3
   )
 
 forward_vision <- 9 
@@ -832,7 +854,7 @@ while(game) {
     
     #ghosts move according to ghost speed
     if (player_moves_since_last_ghost_move == ghost_speed) {
-      occupied_positions <- append(zombie_positions, get_positions_nearby(maze = ,this_position = player_position, radius = 1))
+      occupied_positions <- append(zombie_positions, get_positions_nearby(maze = maze,this_position = player_position, radius = 1))
       ghost_positions <- get_random_positions(maze = maze, num = num_ghosts, occupied_positions = occupied_positions)
       ghost_moves <- ghost_moves +  1
       player_moves_since_last_ghost_move <- 0
@@ -840,7 +862,7 @@ while(game) {
     
     #zombies move according to zombie speed
     if (player_moves_since_last_zombie_move == zombie_speed) {
-      zombie_positions <- move_zombies(maze=maze,zombie_positions = zombie_positions, player_position = player_position)
+      zombie_positions <- move_zombies(maze=maze,zombie_positions = zombie_positions, ghost_positions = ghost_positions, player_position = player_position)
       zombie_moves <- zombie_moves +  1
       player_moves_since_last_zombie_move <- 0
     }
