@@ -19,13 +19,13 @@ require(invctr)
 require(stringr)
 
 # Constants
+NONE <- -1
 WALL <- 0
 CORRIDOR <- 1
 EXIT <- 9
 GHOST <- 2
 ZOMBIE <- 3
 PLAYER <- 5
-SIGHT <- 100
 DIRECTIONS <- c("N", "E", "S", "W")
 
 
@@ -65,18 +65,28 @@ sound_map$set("finish",list("beep"=3, "duration" = 3))
 sound_map$set("intro",list("beep"=8, "duration" = 6))
 
 graph_map <- dict()
-graph_map$set(WALL, list("block"="🏾 ","desc"="wall")) #⛰  ◾■🔳
+graph_map$set(WALL, list("block"="🏾\U17B5","desc"="wall")) #⛰  ◾■🔳
+#graph_map$set(WALL, list("block"="\U1F3FE","desc"="wall"))
 #graph_map$set(WALL, list("block"="⬛ ","desc"="wall")) 
-graph_map$set(CORRIDOR, list("block"="🏻 ","desc"="corridor"))# □ ◻ ◽
+graph_map$set(CORRIDOR, list("block"="🏻\U17B5","desc"="corridor"))# □ ◻ ◽
+#graph_map$set(CORRIDOR, list("block"="\U1F3FB","desc"="corridor"))# □ ◻ ◽
 #graph_map$set(CORRIDOR, list("block"="⬜ ","desc"="corridor"))
-graph_map$set(GHOST,  list("block"="👻 ", "desc"="ghost" ))#🎃🧟🕷 🧛 🧟
+
+graph_map$set(GHOST,  list("block"="👻\U17B5", "desc"="ghost" ))#🎃🧟🕷 🧛 🧟
+#graph_map$set(GHOST,  list("block"="\U1F47B", "desc"="ghost" ))#🎃🧟🕷 🧛 🧟
+
 #graph_map$set(EXIT,   list("block"="⛩ "  ,"desc"="exit"))
-graph_map$set(EXIT,   list("block"="🏆 "  ,"desc"="exit"))
+graph_map$set(EXIT,   list("block"="🏆\U17B5"  ,"desc"="exit"))
+#graph_map$set(EXIT,   list("block"="\U1F3C6"  ,"desc"="exit"))
+
 #graph_map$set(EXIT,   list("block"="🏁 "  ,"desc"="exit"))
-graph_map$set(PLAYER, list("block"="🚹 ","desc"="player")) #🚺
-#graph_map$set(SIGHT, list("block"="🏿 ","desc"="visual field limit"))
+graph_map$set(PLAYER, list("block"="🚹\U17B5","desc"="player")) #🚺 1F6BA
+#graph_map$set(PLAYER, list("block"="\U1F9DF","desc"="player")) 
+
+#graph_map$set(SIGHT, list("block"="🏿\U3164","desc"="visual field limit"))
 #graph_map$set(SIGHT, list("block"="🌑 ", "desc"="visual field limit"))
-graph_map$set(ZOMBIE, list("block"="🧟 ","desc"="zombie"))
+graph_map$set(ZOMBIE, list("block"="🧟\U17B5","desc"="zombie"))
+#graph_map$set(ZOMBIE, list("block"="\U1F9DF","desc"="zombie"))
 
 
 #https://stackoverflow.com/questions/27112370/make-readline-wait-for-input-in-r
@@ -115,22 +125,6 @@ debug_matrix <- function(matrix,name) {
   cat("\n")
 }
 
-# Gets a random position in a corridor
-# return position: list
-# * row:int
-# * col:int
-get_random_position <- function (maze, occupied_positions = list()) {
-  #debug_matrix(matrix=maze,name="maze")
-  corridor_positions <- CORRIDOR %ai% maze # gets the indeces for all CORRIDOR places in the maze
-  available_positions <- corridor_positions
-   for(occupied in occupied_positions) {
-     available_positions <- available_positions[!((occupied$row == available_positions$row) & (occupied$col == available_positions$col)),]
-   }
-  #debug_matrix(matrix =  available_positions, name="available_positions")
-  new_position <- available_positions[sample(1:nrow(available_positions),1),]
-  return(list("row" = new_position$row, "col" = new_position$col))
-}
-
 
 #
 render_bye <- function() {
@@ -155,6 +149,7 @@ title <- function() {
                                                                                                                       "
 }
 
+#
 game_over <- function() {
   msg <- "                                                                               
                                                                                        
@@ -170,7 +165,6 @@ game_over <- function() {
  :: :: :    :   : :   :      :    : :: ::       : :  :      :      : :: ::    :   : :  
                                                                                         "
 }
-
 
 #
 #https://textart.sh/topic/ghost
@@ -274,6 +268,11 @@ zombie_encounter <- function() {
 }
 
 #
+new_position <- function (row,col) {
+  return (list("row"=row,"col"=col))
+}
+
+#
 get_random_direction <- function() {
   lower_limit <- 1
   upper_limit <- length(DIRECTIONS) # length of a vector
@@ -328,13 +327,13 @@ is_next_to <- function(position_1, position_2, max_distance) {
 }
 
 #
-is_player_next_to_any_ghost <-  function(position_1, positions) {
-  Reduce('|',lapply(positions,is_next_to,position_1 = position_1, max_distance = 1))
+is_player_next_to_any_ghost <-  function(player_position, positions) {
+  Reduce('|',lapply(positions,is_next_to,position_2 = player_position, max_distance = 1))
 }
 
 #
 is_player_caught_by_any_zombie <- function(player_position, zombie_positions) {
-  Reduce('|',lapply(zombie_positions,is_next_to,position_1 = player_position, max_distance = 0))
+  Reduce('|',lapply(zombie_positions,is_next_to,position_2 = player_position, max_distance = 0))
 }
 
 #
@@ -431,11 +430,10 @@ render_view <- function(maze, direction, action_map, graph_map) {
   
   map_idx <- 2
   for (line in apply(maze, 1, paste, collapse = "")) {
-    pane2[map_idx,"Map"] <- paste0(".\t\t\t",line)
+    pane2[map_idx,"Map"] <- paste0(".\t\t\t",line,"")
     map_idx <- map_idx + 1
   }
   
-
   pane1[1,"Legend"] <- "Legend"
   legend_idx <- 2
   for(stripe in graph_map$values()) {
@@ -505,7 +503,7 @@ get_closer_to_player <- function(maze, position_1, position_2) {
    corridor <- CORRIDOR %ai% maze_layer # gets the indeces for all CORRIDOR places in the around
    curr_distance <- calc_distance(position_1 = position_1, position_2 = position_2)
    for (i in 1:nrow(corridor)) {
-     new_position <- list("row"=corridor[i,]$row,"col"=corridor[i,]$col)
+     new_position <- new_position(row=corridor[i,]$row,col=corridor[i,]$col)
      new_distance <- calc_distance(new_position, position_2)
      if (new_distance < curr_distance) {
        return(new_position)
@@ -516,7 +514,6 @@ get_closer_to_player <- function(maze, position_1, position_2) {
 
 #
 move_zombies <- function(maze, zombie_positions, player_position) {
-  
   new_zombie_positions <- list()
   for(zombie_position in zombie_positions) {
     new_zombie_positions <- append(new_zombie_positions,list(get_closer_to_player(maze = maze, position_1=zombie_position,position_2=player_position)))
@@ -524,14 +521,92 @@ move_zombies <- function(maze, zombie_positions, player_position) {
   return(new_zombie_positions)
 }
 
+offset_point <- function(maze,point,towards,offset = 1) {
+  
+  if (towards  == "up" ) {
+    if((point - offset) < 1)
+    {
+      new_point <- 1
+    }
+    else {
+      new_point <- point - offset
+    }
+  }
+  else if (towards == "down") {
+    if( (point + offset) > nrow(maze))
+    {
+      new_point <- nrow(maze)
+    }
+    else {
+      new_point <- point + offset
+    }
+  }
+  else if (towards == "left") {
+    if( (point - offset)  < 1)
+    {
+      new_point <- 1
+    }
+    else {
+      new_point <- point - offset
+    }
+  }
+  else if (towards == "right") {
+    if( (point + offset) > ncol(maze))
+    {
+      new_point <- ncol(maze)
+    }
+    else {
+      new_point <- point + offset
+    }
+  }
+  return (new_point)
+}
+
+#
+# returns list of positions around the player
+get_positions_nearby <- function(maze, this_position, radius) {
+  positions <- list()
+  start_row <- offset_point(maze=maze,point=this_position$row,towards = "up", offset=radius)  
+  end_row <- offset_point(maze=maze,point=this_position$row,towards = "down", offset=radius)  
+  start_col <- offset_point(maze=maze,point=this_position$col,towards = "left", offset=radius)  
+  end_col <- offset_point(maze=maze,point=this_position$col,towards = "right" , offset=radius)  
+  for (row in start_row:end_row) {
+    for (col in start_col:end_col) {
+      if(maze[row,col] == CORRIDOR) {
+          positions <- append(positions, list(new_position(row=row, col=col)))
+        }
+    }
+  }
+  return (positions)
+}
+
+# Gets a random position in a corridor
+# return position: list
+# * row:int
+# * col:int
+get_random_position <- function (maze, occupied_positions = list()) {
+  #debug_matrix(matrix=maze,name="maze")
+  corridor_positions <- CORRIDOR %ai% maze # gets the indeces for all CORRIDOR places in the maze
+  available_positions <- corridor_positions
+  for(occupied in occupied_positions) {
+    available_positions <- available_positions[!((occupied$row == available_positions$row) & (occupied$col == available_positions$col)),]
+  }
+  #debug_matrix(matrix =  available_positions, name="available_positions")
+  new_position <- available_positions[sample(1:nrow(available_positions),1),]
+  return(new_position(row = new_position$row, col= new_position$col))
+}
+
 
 #
 get_random_positions <- function(maze, num, occupied_positions) {
-  
   positions <- list()
+  print(positions)
+  print(occupied_positions)
   if(num > 0) {
     for (counter in 1:num) {
-      positions <- append(positions, list(get_random_position(maze=maze,occupied_positions = positions)) )
+      new_position <- get_random_position(maze=maze, occupied_positions = occupied_positions)
+      positions <- append(positions, list(new_position))
+      occupied_positions <- append(occupied_positions, list(new_position))
     }
   }
   return (positions)
@@ -540,17 +615,19 @@ get_random_positions <- function(maze, num, occupied_positions) {
 #
 shuffle <- function(maze, num_ghosts = 1, num_zombies = 0, occupied_positions = list()) {
   player_position <- get_random_position(maze=maze)
-  ghost_positions <- get_random_positions(maze=maze,num=num_ghosts,occupied_positions=c(player_position,occupied_positions))
-  zombie_positions <- get_random_positions(maze=maze,num=num_zombies, occupied_positions=c(player_position,ghost_positions,occupied_positions))
+  occupied_positions <- append(occupied_positions, get_positions_nearby(maze=maze,this_position=player_position, radius=2))
+  ghost_positions <- get_random_positions(maze=maze,num=num_ghosts,occupied_positions=occupied_positions)
+  occupied_positions <- append(occupied_positions,ghost_positions)
+  zombie_positions <- get_random_positions(maze=maze,num=num_zombies, occupied_positions=occupied_positions)
   player_direction <- get_random_direction()
   
-  cat(sprintf("shuffle: player position: %d,%d \n", player_position$row, player_position$col))
-  cat("shuffle: ghost_positions")
-  cat(paste(ghost_positions, sep="", collapse="\n"))
-  cat("\n")
-  cat("shuffle: zombies_positions")
-  cat(paste(zombie_positions, sep="", collapse="\n"))
-  cat("\n")
+  #cat(sprintf("shuffle: player position: %d,%d \n", player_position$row, player_position$col))
+  #cat("shuffle: ghost_positions")
+  #cat(paste(ghost_positions, sep="", collapse="\n"))
+  #cat("\n")
+  #cat("shuffle: zombies_positions")
+  #cat(paste(zombie_positions, sep="", collapse="\n"))
+  #cat("\n")
   
   return (list("player_position"=player_position, 
                "ghost_positions"=ghost_positions, 
@@ -558,7 +635,31 @@ shuffle <- function(maze, num_ghosts = 1, num_zombies = 0, occupied_positions = 
                "zombie_positions"=zombie_positions))
 }
 
+#
+check_collision_monster_player <- function(player_position, ghost_positions, zombie_positions) {
+  collision <- NONE
+  if (is_player_next_to_any_ghost(player_position, ghost_positions)) {
+    collision <- GHOST
+    echo(ghost_encounter(), sound_map,"ghost",clear = T)
+  }
+  else if (is_player_caught_by_any_zombie(player_position, zombie_positions)) {
+    collision <- ZOMBIE
+    echo(zombie_encounter(), sound_map,"zombie",clear = T)
+  }
+  return(collision)
+}
+
 # Mazes
+
+maze0_data <-            c(0,0,0,0,0,0,0,0,0,0)
+maze0_data <- c(maze0_data,0,0,0,0,9,0,0,0,0,0)
+maze0_data <- c(maze0_data,0,1,1,1,1,1,1,1,1,0)
+maze0_data <- c(maze0_data,0,1,1,1,1,1,1,1,1,0)
+maze0_data <- c(maze0_data,0,1,1,1,1,1,1,1,1,0)
+maze0_data <- c(maze0_data,0,0,0,0,0,0,0,0,0,0)
+maze0 = matrix(maze0_data,nrow=6,ncol=10,byrow=TRUE);
+
+
 maze1_data <-            c(0,0,0,0,0,0,0,0,0,0)
 maze1_data <- c(maze1_data,0,1,1,1,1,0,0,1,1,0)
 maze1_data <- c(maze1_data,0,0,1,0,0,1,1,1,0,0)
@@ -596,20 +697,20 @@ maze3_data <- c(maze3_data,0,0,1,1,1,1,1,0,1,0,0,0,1,0,0)
 maze3_data <- c(maze3_data,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)
 maze3 = matrix(maze3_data,nrow=15,ncol=15,byrow=TRUE);
 
-
 mazes <- list(
+  maze0
   #maze1#,
-#  maze2,
-  maze3
+  #maze2,
+  #maze3
   )
 
-forward_vision <- 8 
-rear_vision <- 0
+forward_vision <- 9 
+rear_vision <- 5
 num_ghosts <- 2
-num_zombies <- 3
-ghost_speed <- 10
+num_zombies <- 6
+ghost_speed <- 5
 zombie_speed <- 3
-lives <- 5
+lives <- 6
 maze <- mazes[[sample(1:length(mazes),1)]]
 
 
@@ -634,36 +735,29 @@ echo(ghost_intro(),sound_map,"intro")
 
 # Game loop
 while(game) {
-
+  
   #monster (ghost,zombie) player collision detection
-  repeat {
-    if (is_player_next_to_any_ghost(player_position, ghost_positions)) {
-      
-      if(ghost_moves > 1 || player_moves_since_last_ghost_move >= 1) {
-        echo(ghost_encounter(), sound_map,"ghost",clear = T)
-      }
-      #zombies are not shuffled, they keep their positions
-      after_shuffle <- shuffle(maze=maze, num_ghosts= num_ghosts, num_zombies = 0, occupied_positions = zombie_positions)
-      player_position <- after_shuffle$player_position
-      player_direction <- after_shuffle$player_direction
-      ghost_positions <- after_shuffle$ghost_positions
-    }
-    else if (is_player_caught_by_any_zombie(player_position, zombie_positions)) {
-      if(zombie_moves > 1 || player_moves_since_last_zombie_move >= 1) {
-        echo(zombie_encounter(), sound_map,"zombie", clear = T)
-      }
-      #zombies are not shuffled, they keep their positions
-      after_shuffle <- shuffle(maze=maze, num_ghosts= 0, num_zombies = num_zombies, occupied_positions = ghost_positions)
-      player_position <- after_shuffle$player_position
-      player_direction <- after_shuffle$player_direction
-      zombie_positions <- after_shuffle$zombie_positions
+ 
+  monster_collision <- check_collision_monster_player(player_position = player_position,
+                                                     ghost_positions = ghost_positions,
+                                                     zombie_positions = zombie_positions)
+ if ( monster_collision != NONE) {
+    after_shuffle <- shuffle(maze=maze, num_ghosts= num_ghosts, num_zombies = num_zombies)
+    player_position <- after_shuffle$player_position
+    player_direction <- after_shuffle$player_direction
+    ghost_positions <- after_shuffle$ghost_positions
+    zombie_positions <- after_shuffle$zombie_positions
+    ghost_moves <- 0
+    player_moves_since_last_ghost_move <- 0
+    zombie_moves <- 0
+    player_moves_since_last_zombie_move <- 0
+    player_moves <- 0
+    game <- TRUE
+    if(monster_collision == ZOMBIE) {
       lives <- lives - 1
     }
-    else {
-      break
-    }
   }
-  
+
   if(lives == 0) {
     game <- FALSE
     echo(msg=game_over(),clear= TRUE)
@@ -738,7 +832,8 @@ while(game) {
     
     #ghosts move according to ghost speed
     if (player_moves_since_last_ghost_move == ghost_speed) {
-      ghost_positions <- get_random_positions(maze = maze, num = num_ghosts, occupied_positions = c(player_direction,zombie_positions))
+      occupied_positions <- append(zombie_positions, get_positions_nearby(maze = ,this_position = player_position, radius = 1))
+      ghost_positions <- get_random_positions(maze = maze, num = num_ghosts, occupied_positions = occupied_positions)
       ghost_moves <- ghost_moves +  1
       player_moves_since_last_ghost_move <- 0
     }
@@ -749,6 +844,6 @@ while(game) {
       zombie_moves <- zombie_moves +  1
       player_moves_since_last_zombie_move <- 0
     }
-    
   }
 }
+
