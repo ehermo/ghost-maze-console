@@ -592,11 +592,14 @@ get_exit_position <- function(maze) {
 get_positions_nearby <- function(maze, this_position, radius) {
   positions <- list()
   corridor <- CORRIDOR %ai% maze
-  corridor <- corridor %>% mutate(distance=apply(corridor, 1, 
-                                                 function(x, to_this) {calc_distance(position_1 = new_position(x["row"],x["col"]), position_2 = to_this)}, 
-                                                 to_this = this_position))
-  nearby <- corridor %>% filter(distance <= radius)
-  positions <- apply(nearby,1, function(x) {new_position(x["row"],x["col"])})
+  positions <- corridor %>%
+    mutate(is_nearby = apply(corridor,
+                             1,
+                             function(x, to_this, distance) {is_next_to(position_1 = new_position(x["row"],x["col"]), position_2 = to_this,max_distance = distance)},
+                             to_this = this_position,
+                             distance = radius)) %>%
+    filter(is_nearby) %>% 
+    apply(1, function(x) {new_position(x["row"],x["col"])})
   return (positions)
 }
 
@@ -943,7 +946,7 @@ game_level_map$set("level6",list(
   "zombie_speed"=3,
   "forward_vision"=5,
   "rear_vision"=1,
-  "radius_to_exit"=2
+  "radius_to_exit"=3
 ))
 game_level_map$set("level7",list(
   "name"="Level 7",
@@ -951,7 +954,7 @@ game_level_map$set("level7",list(
   "num_ghosts"=3,
   "ghost_speed"=3,
   "num_zombies"=3,
-  "zombie_speed"=3,
+  "zombie_speed"=2,
   "forward_vision"=5,
   "rear_vision"=2,
   "radius_to_exit"=5
@@ -961,11 +964,11 @@ game_level_map$set("level8",list(
   "maze"=maze3,
   "num_ghosts"=3,
   "ghost_speed"=3,
-  "num_zombies"=3,
-  "zombie_speed"=3,
+  "num_zombies"=4,
+  "zombie_speed"=2,
   "forward_vision"=5,
   "rear_vision"=1,
-  "radius_to_exit"=5
+  "radius_to_exit"=6
 ))
 game_level_map$set("level9",list(
   "name"="Level 9",
